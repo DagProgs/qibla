@@ -1,0 +1,48 @@
+header {
+  position: relative;
+  height: 60px;
+  z-index: 1;
+}
+
+.header_container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: fixed;
+  width: 100vw;
+  height: 60px;
+  padding: 0 1rem;
+  background-color: var(--color-bg);
+}
+
+.header_container .icon_back {
+  padding: 30px;
+  margin: -30px;
+}
+
+.header_container .icon_back svg {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+}
+
+.header_container svg {
+  width: 1.5rem;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  min-height: 1.5rem;
+}
+
+.header_text {
+  line-height: 1.3;
+}
+
+.header_text h1 {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.header_text p {
+  font-size: 1.2rem;
+}
