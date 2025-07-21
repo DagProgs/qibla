@@ -1,7 +1,7 @@
 .main_container {
   position: relative;
   width: calc(100vw - 2rem);
-  height: calc(100svh - 130px);
+  height: calc(100dvh - 130px);
   margin: 1rem;
   padding: 1rem;
   background-color: var(--color-bg);
