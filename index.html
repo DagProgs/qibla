@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Красивый компас Каабы с направлением</title>
+<title>Compass to Qibla</title>
 <style>
   body {
     display: flex;
@@ -50,15 +50,14 @@
     height: 0; 
     border-left: 15px solid transparent;
     border-right: 15px solid transparent;
-    border-bottom: 120px solid #007bff; /* Цвет стрелки, синяя */
+    border-bottom: 120px solid #007bff;
     border-radius: 50%;
-    transform-origin: bottom center; /* Вращение вокруг основания стрелки */
+    transform-origin: bottom center;
+    /* Вращение стрелки согласно направлению */
     transform: translate(-50%, -100%) rotate(var(--deg));
     box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    /* добавляем немного градиента или тени для красоты */
   }
-
-  /* Конец стрелки - острие */
+  /* Острие стрелки */
   .arrow::after {
     content: "";
     position: absolute;
@@ -69,9 +68,8 @@
     height: 0; 
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
-    border-top: 20px solid #007bff; /* острие стрелки */
+    border-top: 20px solid #007bff;
   }
-
   /* Центр */
   .center {
     position: absolute;
@@ -84,7 +82,6 @@
     transform: translate(-50%, -50%);
     z-index: 2;
   }
-
   /* Кнопка и текст */
   button {
     padding: 10px 20px;
@@ -99,26 +96,26 @@
 </head>
 <body>
 <div id="app">
-  <h2>Компас Каабы с красивой стрелкой</h2>
+  <h2>Компас к Мечети (на север, восток, юг, запад)</h2>
   <div class="compass">
     <!-- Обозначения -->
-    <div class="label label-n">С</div>
-    <div class="label label-ne" style="top: 20px; right: 20px;">СВ</div>
-    <div class="label label-e" style="top: 50%; right: 10px; transform: translateY(-50%);">В</div>
-    <div class="label label-se" style="bottom: 20px; right: 20px;">ЮВ</div>
-    <div class="label label-s" style="bottom: 10px; left: 50%; transform: translateX(-50%);">Ю</div>
-    <div class="label label-sw" style="bottom: 20px; left: 20px;">ЮЗ</div>
-    <div class="label label-w" style="top: 50%; left: 10px; transform: translateY(-50%);">З</div>
-    <div class="label label-nw" style="top: 20px; left: 20px;">СЗ</div>
+    <div class="label label-n">N</div>
+    <div class="label label-ne" style="top: 20px; right: 20px;">NE</div>
+    <div class="label label-e" style="top: 50%; right: 10px; transform: translateY(-50%);">E</div>
+    <div class="label label-se" style="bottom: 20px; right: 20px;">SE</div>
+    <div class="label label-s" style="bottom: 10px; left: 50%; transform: translateX(-50%);">S</div>
+    <div class="label label-sw" style="bottom: 20px; left: 20px;">SW</div>
+    <div class="label label-w" style="top: 50%; left: 10px; transform: translateY(-50%);">W</div>
+    <div class="label label-nw" style="top: 20px; left: 20px;">NW</div>
 
     <!-- Стрелка -->
     <div class="arrow" :style="{ '--deg': direction + 'deg' }"></div>
     <!-- Центр -->
     <div class="center"></div>
   </div>
-  <button @click="getLocation">Получить местоположение</button>
+  <button @click="getLocation">Определить местоположение</button>
   <p v-if="locationStatus">{{ locationStatus }}</p>
-  <p>Направление к Каабе: {{ direction.toFixed(2) }} градусов</p>
+  <p v-if="direction !== null">Направление к Каабе: {{ direction.toFixed(2) }}°</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
@@ -127,11 +124,11 @@ new Vue({
   el: '#app',
   data() {
     return {
-      direction: 0, // угол в градусах
+      direction: null, // угол в градусах от севера
       // Координаты Каабы (Мекки)
       kabbaLat: 21.4225,
       kabbaLon: 39.8262,
-      locationStatus: '', // статус получения геолокации
+      locationStatus: '',
     };
   },
   methods: {
@@ -142,8 +139,8 @@ new Vue({
           const userLat = pos.coords.latitude;
           const userLon = pos.coords.longitude;
           this.locationStatus = `Широта: ${userLat.toFixed(4)}, Долгота: ${userLon.toFixed(4)}`;
-          const heading = this.calculateHeading(userLat, userLon, this.kabbaLat, this.kabbaLon);
-          this.direction = heading;
+          const azimuth = this.calculateAzimuth(userLat, userLon, this.kabbaLat, this.kabbaLon);
+          this.direction = azimuth;
         }, () => {
           this.locationStatus = 'Не удалось получить местоположение.';
         });
@@ -151,16 +148,19 @@ new Vue({
         this.locationStatus = 'Геолокация не поддерживается этим браузером.';
       }
     },
-    calculateHeading(lat1, lon1, lat2, lon2) {
-      const φ1 = lat1 * Math.PI/180;
-      const φ2 = lat2 * Math.PI/180;
-      const Δλ = (lon2 - lon1) * Math.PI/180;
+    calculateAzimuth(lat1, lon1, lat2, lon2) {
+      // Переводим в радианы
+      const φ1 = lat1 * Math.PI / 180;
+      const φ2 = lat2 * Math.PI / 180;
+      const Δλ = (lon2 - lon1) * Math.PI / 180;
 
       const y = Math.sin(Δλ) * Math.cos(φ2);
       const x = Math.cos(φ1) * Math.sin(φ2) -
                 Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-      const θ = Math.atan2(y, x);
-      const bearing = (θ * 180/Math.PI + 360) % 360;
+      let θ = Math.atan2(y, x);
+      let bearing = θ * 180 / Math.PI;
+      // Приводим к диапазону 0-360
+      bearing = (bearing + 360) % 360;
       return bearing;
     }
   }
