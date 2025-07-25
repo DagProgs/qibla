@@ -2,222 +2,117 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<title>Компас киблы с точкой и движущейся стрелкой</title>
-<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Компас Каабы на Vue</title>
 <style>
-body {
-  background: #f0f0f0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-family: Arial, sans-serif;
-  margin: 0;
-}
-.app {
-  text-align: center;
-}
-.compass-container {
-  position: relative;
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  background: radial-gradient(circle at center, #fff, #ddd);
-  border: 8px solid #006400;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  margin: 0 auto;
-}
-.compass {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-.needles {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-.needle {
-  position: absolute;
-  bottom: 50%;
-  left: 50%;
-  width: 4px;
-  height: 150px;
-  background-color: #006400;
-  transform-origin: bottom center;
-  transition: transform 0.3s ease;
-}
-.needle-direction {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 8px;
-  height: 8px;
-  background-color: red;
-  border-radius: 50%;
-  transform: translate(-50%, -50%) translateY(-130px);
-}
-.center-dot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 12px;
-  height: 12px;
-  background-color: #006400;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-}
-.labels {
-  position: absolute;
-  font-weight: bold;
-  font-size: 18px;
-  color: #006400;
-}
-.label-n { top: 10px; left: 50%; transform: translateX(-50%); }
-.label-s { bottom: 10px; left: 50%; transform: translateX(-50%); }
-.label-e { top: 50%; right: 10px; transform: translateY(-50%); }
-.label-w { top: 50%; left: 10px; transform: translateY(-50%); }
-
-button {
-  margin-top: 20px;
-  padding: 12px 20px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
-  background-color: #006400;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-button:hover {
-  background-color: #004d00;
-}
-.message {
-  margin-top: 20px;
-  font-size: 20px;
-  font-weight: bold;
-  color: green;
-}
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background: #f0f0f0;
+  }
+  #app {
+    text-align: center;
+  }
+  .compass {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    border: 10px solid black;
+    border-radius: 50%;
+    background: #fff;
+  }
+  .arrow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0; 
+    height: 0; 
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 80px solid red;
+    transform-origin: bottom center;
+    transform: translate(-50%, -100%) rotate(var(--deg));
+  }
+  .center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    background: black;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
 </style>
 </head>
 <body>
-<div id="app" class="app">
-  <div class="compass-container">
-    <div class="compass">
-      <div class="needles">
-        <!-- Стрелка направления к Каабе -->
-        <div 
-          class="needle" 
-          :style="{transform: 'translate(-50%, -50%) translateY(-130px) rotate(' + qiblaDirection + 'deg)'}"
-        ></div>
-        <!-- Центр -->
-        <div class="center-dot"></div>
-        <!-- Красная точка указывающая на направление к Каабе -->
-        <div 
-          class="needle-direction"
-          :style="{transform: 'translate(-50%, -50%) translateY(-130px) rotate(' + qiblaDirection + 'deg)'}"
-        ></div>
-      </div>
-      <!-- Стрелка устройства, вращается по ориентации -->
-      <div 
-        class="needle" 
-        :style="{transform: 'translate(-50%, -50%) translateY(-130px) rotate(' + deviceOrientation + 'deg)'}"
-      ></div>
-    </div>
-    <!-- Надписи сторон -->
-    <div class="labels label-n">N</div>
-    <div class="labels label-s">S</div>
-    <div class="labels label-e">E</div>
-    <div class="labels label-w">W</div>
+<div id="app">
+  <h2>Компас Каабы</h2>
+  <div class="compass">
+    <div class="arrow" :style="{ '--deg': direction + 'deg' }"></div>
+    <div class="center"></div>
   </div>
-  <button @click="getLocation">Обновить местоположение</button>
-  <div v-if="loading">Получение местоположения...</div>
-  <div v-if="error" style="color:red;">{{ error }}</div>
-  <div v-if="qiblaDirection !== null" style="margin-top: 10px;">
-    Направление киблы: {{ qiblaDirection.toFixed(1) }}°
-  </div>
-  <!-- Сообщение о совпадении -->
-  <div v-if="isAligned" class="message">
-    Вы в правильном направлении!
-  </div>
+  <p>Направление к Каабе: {{ direction.toFixed(2) }} градусов</p>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
 <script>
 new Vue({
   el: '#app',
-  data: {
-    latitude: null,
-    longitude: null,
-    qiblaDirection: null,
-    deviceOrientation: 0,
-    loading: false,
-    error: null,
-    meccaLat: 21.4225,
-    meccaLon: 39.8262,
-    isAligned: false
+  data() {
+    return {
+      direction: 0, // угол в градусах
+      // Координаты Каабы (Мекки)
+      kabbaLat: 21.4225,
+      kabbaLon: 39.8262,
+    };
   },
   methods: {
-    getLocation() {
-      this.loading = true;
-      this.error = null;
+    updateDirection() {
       if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          position => {
-            this.latitude = position.coords.latitude;
-            this.longitude = position.coords.longitude;
-            this.calculateQibla();
-            this.loading = false;
-          },
-          err => {
-            this.error = 'Не удалось получить местоположение: ' + err.message;
-            this.loading = false;
-          }
-        );
+        navigator.geolocation.getCurrentPosition(pos => {
+          const userLat = pos.coords.latitude;
+          const userLon = pos.coords.longitude;
+          const heading = this.calculateHeading(userLat, userLon, this.kabbaLat, this.kabbaLon);
+          this.direction = heading;
+        }, () => {
+          alert('Геолокация недоступна');
+        });
       } else {
-        this.error = 'Ваш браузер не поддерживает геолокацию.';
-        this.loading = false;
+        alert('Геолокация не поддерживается');
       }
     },
-    calculateQibla() {
-      if (this.latitude !== null && this.longitude !== null) {
-        const φ1 = this.latitude * Math.PI / 180;
-        const φ2 = this.meccaLat * Math.PI / 180;
-        const Δλ = (this.meccaLon - this.longitude) * Math.PI / 180;
-        const y = Math.sin(Δλ) * Math.cos(φ2);
-        const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-        let θ = Math.atan2(y, x);
-        θ = θ * 180 / Math.PI;
-        this.qiblaDirection = (θ + 360) % 360;
-        this.checkAlignment();
-      }
-    },
-    handleOrientation(event) {
-      if (event.alpha !== null) {
-        // alpha - направление устройства относительно севера
-        this.deviceOrientation = event.alpha;
-        this.checkAlignment();
-      }
-    },
-    checkAlignment() {
-      if (this.qiblaDirection !== null && this.deviceOrientation !== null) {
-        const diff = Math.abs(this.qiblaDirection - this.deviceOrientation);
-        this.isAligned = diff < 10 || Math.abs(diff - 360) < 10;
-      }
+    calculateHeading(lat1, lon1, lat2, lon2) {
+      // Переводим в радианы
+      const φ1 = lat1 * Math.PI/180;
+      const φ2 = lat2 * Math.PI/180;
+      const Δλ = (lon2 - lon1) * Math.PI/180;
+
+      const y = Math.sin(Δλ) * Math.cos(φ2);
+      const x = Math.cos(φ1) * Math.sin(φ2) -
+                Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+      const θ = Math.atan2(y, x);
+      const bearing = (θ * 180/Math.PI + 360) % 360; // в градусах
+      return bearing;
     }
   },
   mounted() {
-    this.getLocation();
-    if (window.DeviceOrientationEvent) {
-      window.addEventListener('deviceorientation', this.handleOrientation);
-    } else {
-      this.error = 'Ваш браузер не поддерживает ориентацию устройства.';
-    }
+    this.updateDirection();
+    // Обновлять направление при изменении ориентации устройства
+    window.addEventListener('deviceorientation', (event) => {
+      if (event.alpha !== null) {
+        this.direction = (this.calculateHeadingFromDevice(event.alpha)) % 360;
+      }
+    });
   },
-  beforeDestroy() {
-    if (window.DeviceOrientationEvent) {
-      window.removeEventListener('deviceorientation', this.handleOrientation);
+  methods: {
+    calculateHeadingFromDevice(alpha) {
+      // В зависимости от устройства, alpha может быть достаточно
+      // Для более точных данных можно комбинировать с geolocation
+      return alpha;
     }
   }
 });
