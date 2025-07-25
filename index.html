@@ -7,14 +7,16 @@
 <style>
   body {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    justify-content: center;
     height: 100vh;
     margin: 0;
     background: #f0f0f0;
+    font-family: Arial, sans-serif;
   }
-  #app {
-    text-align: center;
+  h2 {
+    margin-bottom: 20px;
   }
   .compass {
     position: relative;
@@ -23,6 +25,7 @@
     border: 10px solid black;
     border-radius: 50%;
     background: #fff;
+    margin-bottom: 20px;
   }
   .arrow {
     position: absolute;
@@ -46,6 +49,14 @@
     border-radius: 50%;
     transform: translate(-50%, -50%);
   }
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  p {
+    margin-top: 15px;
+  }
 </style>
 </head>
 <body>
@@ -55,6 +66,8 @@
     <div class="arrow" :style="{ '--deg': direction + 'deg' }"></div>
     <div class="center"></div>
   </div>
+  <button @click="getLocation">Получить местоположение</button>
+  <p v-if="locationStatus">{{ locationStatus }}</p>
   <p>Направление к Каабе: {{ direction.toFixed(2) }} градусов</p>
 </div>
 
@@ -68,25 +81,27 @@ new Vue({
       // Координаты Каабы (Мекки)
       kabbaLat: 21.4225,
       kabbaLon: 39.8262,
+      locationStatus: '', // статус получения геолокации
     };
   },
   methods: {
-    updateDirection() {
+    getLocation() {
       if (navigator.geolocation) {
+        this.locationStatus = 'Запрашиваю геолокацию...';
         navigator.geolocation.getCurrentPosition(pos => {
           const userLat = pos.coords.latitude;
           const userLon = pos.coords.longitude;
+          this.locationStatus = `Широта: ${userLat.toFixed(4)}, Долгота: ${userLon.toFixed(4)}`;
           const heading = this.calculateHeading(userLat, userLon, this.kabbaLat, this.kabbaLon);
           this.direction = heading;
         }, () => {
-          alert('Геолокация недоступна');
+          this.locationStatus = 'Не удалось получить местоположение.';
         });
       } else {
-        alert('Геолокация не поддерживается');
+        this.locationStatus = 'Геолокация не поддерживается этим браузером.';
       }
     },
     calculateHeading(lat1, lon1, lat2, lon2) {
-      // Переводим в радианы
       const φ1 = lat1 * Math.PI/180;
       const φ2 = lat2 * Math.PI/180;
       const Δλ = (lon2 - lon1) * Math.PI/180;
@@ -95,25 +110,21 @@ new Vue({
       const x = Math.cos(φ1) * Math.sin(φ2) -
                 Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
       const θ = Math.atan2(y, x);
-      const bearing = (θ * 180/Math.PI + 360) % 360; // в градусах
+      const bearing = (θ * 180/Math.PI + 360) % 360;
       return bearing;
+    },
+    handleDeviceOrientation(event) {
+      if (event.alpha !== null) {
+        // Можно использовать data из ориентации устройства, если нужно
+        // Например, для более точного компаса
+        // this.direction = (this.calculateHeadingFromDevice(event.alpha)) % 360;
+        // Для этого примера оставим так
+      }
     }
   },
   mounted() {
-    this.updateDirection();
-    // Обновлять направление при изменении ориентации устройства
-    window.addEventListener('deviceorientation', (event) => {
-      if (event.alpha !== null) {
-        this.direction = (this.calculateHeadingFromDevice(event.alpha)) % 360;
-      }
-    });
-  },
-  methods: {
-    calculateHeadingFromDevice(alpha) {
-      // В зависимости от устройства, alpha может быть достаточно
-      // Для более точных данных можно комбинировать с geolocation
-      return alpha;
-    }
+    // Можно слушать ориентацию устройства
+    window.addEventListener('deviceorientation', this.handleDeviceOrientation);
   }
 });
 </script>
