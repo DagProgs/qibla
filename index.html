@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8" />
-<title>Компас киблы</title>
+<title>Компас киблы с точкой</title>
 <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
 <style>
 body {
@@ -14,17 +14,19 @@ body {
   font-family: Arial, sans-serif;
   margin: 0;
 }
-
+.app {
+  text-align: center;
+}
 .compass-container {
   position: relative;
   width: 300px;
   height: 300px;
   border-radius: 50%;
   background: radial-gradient(circle at center, #fff, #ddd);
-  border: 8px solid #006400; /* темно-зеленый градиент */
+  border: 8px solid #006400;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  margin: 0 auto;
 }
-
 .needle {
   position: absolute;
   bottom: 50%;
@@ -33,11 +35,8 @@ body {
   height: 150px;
   background-color: #006400;
   transform-origin: bottom center;
-  transform: rotate(0deg);
   transition: transform 0.5s ease;
-  border-radius: 2px;
 }
-
 .center-dot {
   position: absolute;
   top: 50%;
@@ -48,47 +47,32 @@ body {
   border-radius: 50%;
   transform: translate(-50%, -50%);
 }
-
-.north-label {
+.labels {
   position: absolute;
+  font-weight: bold;
+  font-size: 18px;
+  color: #006400;
+}
+.label-n {
   top: 10px;
   left: 50%;
   transform: translateX(-50%);
-  font-weight: bold;
-  font-size: 18px;
-  color: #006400;
 }
-
-.south-label {
-  position: absolute;
+.label-s {
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
-  font-weight: bold;
-  font-size: 18px;
-  color: #006400;
 }
-
-.east-label {
-  position: absolute;
+.label-e {
   top: 50%;
   right: 10px;
   transform: translateY(-50%);
-  font-weight: bold;
-  font-size: 18px;
-  color: #006400;
 }
-
-.west-label {
-  position: absolute;
+.label-w {
   top: 50%;
   left: 10px;
   transform: translateY(-50%);
-  font-weight: bold;
-  font-size: 18px;
-  color: #006400;
 }
-
 button {
   margin-top: 20px;
   padding: 12px 20px;
@@ -103,25 +87,42 @@ button {
 button:hover {
   background-color: #004d00;
 }
+.message {
+  margin-top: 20px;
+  font-size: 20px;
+  font-weight: bold;
+  color: green;
+}
 </style>
 </head>
 <body>
-<div id="app" style="text-align: center;">
+<div id="app" class="app">
   <div class="compass-container">
-    <div class="north-label">N</div>
-    <div class="south-label">S</div>
-    <div class="east-label">E</div>
-    <div class="west-label">W</div>
+    <!-- Надписи сторон -->
+    <div class="labels label-n">N</div>
+    <div class="labels label-s">S</div>
+    <div class="labels label-e">E</div>
+    <div class="labels label-w">W</div>
+    <!-- Стрелка -->
     <div class="needle" :style="{transform: 'rotate(' + qiblaDirection + 'deg)'}"></div>
+    <!-- Центр -->
     <div class="center-dot"></div>
+    <!-- Точка направления к Каабе -->
+    <div 
+      class="needle" 
+      style="width:8px; height:8px; background-color:red; border-radius:50%; position:absolute; top:50%; left:50%; transform: translate(-50%, -50%) rotate({{qiblaDirection}}deg) translateY(-130px);"
+      :style="{transform: 'translate(-50%, -50%) translateY(-130px) rotate(' + qiblaDirection + 'deg)'}"
+    ></div>
   </div>
-  <div>
-    <button @click="getLocation">Обновить местоположение</button>
-  </div>
-  <div v-if="loading" style="margin-top:10px;">Получение местоположения...</div>
-  <div v-if="error" style="margin-top:10px; color:red;">{{ error }}</div>
-  <div v-if="qiblaDirection !== null" style="margin-top:20px;">
+  <button @click="getLocation">Обновить местоположение</button>
+  <div v-if="loading">Получение местоположения...</div>
+  <div v-if="error" style="color:red;">{{ error }}</div>
+  <div v-if="qiblaDirection !== null" style="margin-top: 10px;">
     Направление киблы: {{ qiblaDirection.toFixed(1) }}°
+  </div>
+  <!-- Сообщение о совпадении -->
+  <div v-if="isAligned" class="message">
+    Вы в правильном направлении!
   </div>
 </div>
 
@@ -135,7 +136,9 @@ new Vue({
     loading: false,
     error: null,
     meccaLat: 21.4225,
-    meccaLon: 39.8262
+    meccaLon: 39.8262,
+    userHeading: 0, // направление телефона (если есть)
+    isAligned: false
   },
   methods: {
     getLocation() {
@@ -167,13 +170,36 @@ new Vue({
         const y = Math.sin(Δλ) * Math.cos(φ2);
         const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
         let θ = Math.atan2(y, x);
-        θ = θ * 180 / Math.PI; // в градусы
+        θ = θ * 180 / Math.PI;
         this.qiblaDirection = (θ + 360) % 360;
+        this.checkAlignment();
+      }
+    },
+    handleOrientation(event) {
+      if (event.alpha !== null) {
+        // alpha - направление устройства относительно севера
+        this.userHeading = event.alpha;
+        this.checkAlignment();
+      }
+    },
+    checkAlignment() {
+      if (this.qiblaDirection !== null && this.userHeading !== null) {
+        // Проверка, близко ли текущее направление к направлению Каабы
+        const diff = Math.abs(this.qiblaDirection - this.userHeading);
+        this.isAligned = diff < 10 || Math.abs(diff - 360) < 10;
       }
     }
   },
   mounted() {
     this.getLocation();
+    if (window.DeviceOrientationEvent) {
+      window.addEventListener('deviceorientation', this.handleOrientation);
+    }
+  },
+  beforeDestroy() {
+    if (window.DeviceOrientationEvent) {
+      window.removeEventListener('deviceorientation', this.handleOrientation);
+    }
   }
 });
 </script>
