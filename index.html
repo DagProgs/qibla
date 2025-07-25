@@ -3,121 +3,59 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Направление на Каабу с картой</title>
-<!-- Подключение Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<title>PixiJS + Другие библиотеки</title>
+<!-- Стиль для тела -->
 <style>
-  body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-  #map { height: 500px; margin: 20px auto; max-width: 600px; }
-  #direction {
-    width: 200px; height: 200px; margin: 20px auto;
-    position: relative; display: flex; align-items: center; justify-content: center;
-  }
-  #arrow {
-    width: 0; height: 0;
-    border-left: 20px solid transparent;
-    border-right: 20px solid transparent;
-    border-bottom: 80px solid crimson;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(0deg);
-    transform-origin: bottom center;
-    transition: transform 0.5s ease;
-  }
-  #status { margin-top: 10px; }
+  body { margin: 0; overflow: hidden; }
+  #status { position: absolute; top: 10px; left: 10px; background: #fff; padding: 8px; border-radius: 4px; }
 </style>
 </head>
 <body>
+<div id="status">Загрузка...</div>
 
-<h2>Направление на Каабу</h2>
-<div id="map"></div>
-<div id="direction">
-  <div id="arrow"></div>
-</div>
-<div id="status">Получение данных...</div>
+<!-- Подключение сторонних библиотек -->
+<!-- Например, Moment.js и Lodash -->
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
 
-<!-- Подключение Leaflet JS -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<!-- Подключение PixiJS -->
+<script src="https://pixijs.download/release/pixi.min.js"></script>
+
 <script>
-  // Координаты Каабы (Мекка)
-  const kabbaLat = 21.4225;
-  const kabbaLon = 39.8262;
+  // Проверка, что все библиотеки загружены
+  console.log('Lodash:', _);
+  console.log('Moment:', moment);
 
-  let userMarker = null;
-  let map = null;
-  let userLat = null;
-  let userLon = null;
-  let currentBearing = 0;
+  // Создаем приложение PixiJS
+  const app = new PIXI.Application({ width: window.innerWidth, height: window.innerHeight, backgroundColor: 0xf0f0f0 });
+  document.body.appendChild(app.view);
 
-  // Инициализация карты
-  function initMap(lat, lon) {
-    map = L.map('map').setView([lat, lon], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-    userMarker = L.marker([lat, lon]).addTo(map).bindPopup("Ваше местоположение").openPopup();
-  }
+  // Обновляем статус
+  const statusDiv = document.getElementById('status');
 
-  // Получение геолокации
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        userLat = position.coords.latitude;
-        userLon = position.coords.longitude;
-        document.getElementById('status').innerText = 'Координаты получены. Старт карты.';
-        initMap(userLat, userLon);
-        updateDirection();
-      },
-      error => {
-        document.getElementById('status').innerText = 'Ошибка получения геолокации: ' + error.message;
-      }
-    );
-  } else {
-    document.getElementById('status').innerText = 'Геолокация не поддерживается в браузере.';
-  }
+  // Создаем стрелку
+  const arrow = new PIXI.Graphics();
+  arrow.lineStyle(8, 0xff4500);
+  arrow.moveTo(0, 0);
+  arrow.lineTo(0, -150);
+  arrow.pivot.set(0, 0);
+  arrow.position.set(app.screen.width / 2, app.screen.height / 2);
+  app.stage.addChild(arrow);
 
-  // Обработка ориентации
-  if (window.DeviceOrientationEvent) {
-    window.addEventListener('deviceorientation', handleOrientation);
-  } else {
-    document.getElementById('status').innerText = 'Ориентация устройства не поддерживается.';
-  }
+  // Анимация
+  let angle = 0;
+  app.ticker.add(() => {
+    angle += 0.01;
+    arrow.rotation = angle;
 
-  // Обработка ориентации устройства
-  function handleOrientation(event) {
-    if (event.alpha !== null) {
-      // alpha — направление устройства относительно магнитного севера
-      // В градусах
-      let deviceHeading = event.alpha;
+    // Используем Lodash для случайного числа
+    const rand = _.random(1, 100);
+    // Используем Moment для отображения текущего времени
+    statusDiv.textContent = `Время: ${moment().format('LTS')}, случайное число: ${rand}`;
+  });
 
-      if (userLat !== null && userLon !== null) {
-        // Вычисляем азимут к Каабе
-        const bearing = getBearing(userLat, userLon, kabbaLat, kabbaLon);
-        // Учитываем направление устройства
-        currentBearing = bearing - deviceHeading;
-        updateArrow(currentBearing);
-      }
-    }
-  }
-
-  // Вычисление азимута
-  function getBearing(lat1, lon1, lat2, lon2) {
-    const φ1 = lat1 * Math.PI/180;
-    const φ2 = lat2 * Math.PI/180;
-    const Δλ = (lon2 - lon1) * Math.PI/180;
-    const y = Math.sin(Δλ) * Math.cos(φ2);
-    const x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
-    let θ = Math.atan2(y, x);
-    θ = θ * 180/Math.PI;
-    return (θ + 360) % 360;
-  }
-
-  // Обновление стрелки
-  function updateArrow(angle) {
-    const arrow = document.getElementById('arrow');
-    arrow.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
-  }
+  // Проверка, что объекты созданы
+  console.log('Arrow:', arrow);
 </script>
 </body>
 </html>
