@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Компас Каабы на Vue</title>
+<title>Компас Каабы с направлением</title>
 <style>
   body {
     display: flex;
@@ -25,7 +25,50 @@
     border: 10px solid black;
     border-radius: 50%;
     background: #fff;
-    margin-bottom: 20px;
+  }
+  .labels {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+  }
+  .label {
+    position: absolute;
+    font-size: 14px;
+    transform: translate(-50%, -50%);
+  }
+  /* Расположение обозначений направлений */
+  .label-n { top: 10px; left: 50%; transform: translateX(-50%); }
+  .label-ne { top: 30px; right: 10px; }
+  .label-e { top: 50%; right: 10px; transform: translateY(-50%); }
+  .label-se { bottom: 30px; right: 10px; }
+  .label-s { bottom: 10px; left: 50%; transform: translateX(-50%); }
+  .label-sw { bottom: 30px; left: 10px; }
+  .label-w { top: 50%; left: 10px; transform: translateY(-50%); }
+  .label-nw { top: 30px; left: 10px; }
+
+  /* Обозначения промежуточных направлений */
+  .label-nne { top: 15px; right: 50%; transform: translateX(50%) translateY(-50%); }
+  .label-ene { top: 50%; right: 15px; transform: translateY(-50%); }
+  /* Можно добавить дополнительные, если нужно */
+
+  /* Центральная точка */
+  .center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    background: black;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
   }
   .arrow {
     position: absolute;
@@ -38,16 +81,7 @@
     border-top: 80px solid red; /* Стрелка указывает вниз */
     transform-origin: top center; /* Вращение вокруг верхней точки */
     transform: translate(-50%, -100%) rotate(var(--deg));
-  }
-  .center {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 10px;
-    height: 10px;
-    background: black;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
+    z-index: 1;
   }
   button {
     padding: 10px 20px;
@@ -63,7 +97,19 @@
 <div id="app">
   <h2>Компас Каабы</h2>
   <div class="compass">
+    <!-- Обозначения направлений -->
+    <div class="label label-n">С</div>
+    <div class="label label-ne" style="top: 20px; right: 20px;">СВ</div>
+    <div class="label label-e" style="top: 50%; right: 10px; transform: translateY(-50%);">В</div>
+    <div class="label label-se" style="bottom: 20px; right: 20px;">ЮВ</div>
+    <div class="label label-s" style="bottom: 10px; left: 50%; transform: translateX(-50%);">Ю</div>
+    <div class="label label-sw" style="bottom: 20px; left: 20px;">ЮЗ</div>
+    <div class="label label-w" style="top: 50%; left: 10px; transform: translateY(-50%);">З</div>
+    <div class="label label-nw" style="top: 20px; left: 20px;">СЗ</div>
+
+    <!-- Стрелка -->
     <div class="arrow" :style="{ '--deg': direction + 'deg' }"></div>
+    <!-- Центр -->
     <div class="center"></div>
   </div>
   <button @click="getLocation">Получить местоположение</button>
@@ -112,18 +158,7 @@ new Vue({
       const θ = Math.atan2(y, x);
       const bearing = (θ * 180/Math.PI + 360) % 360;
       return bearing;
-    },
-    handleDeviceOrientation(event) {
-      if (event.alpha !== null) {
-        // Можно использовать data из ориентации устройства, если нужно
-        // Например, для более точного компаса
-        // this.direction = (this.calculateHeadingFromDevice(event.alpha)) % 360;
-      }
     }
-  },
-  mounted() {
-    // Можно слушать ориентацию устройства
-    window.addEventListener('deviceorientation', this.handleDeviceOrientation);
   }
 });
 </script>
