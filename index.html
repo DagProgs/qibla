@@ -1,197 +1,181 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Показатель киблы с геолокацией</title>
-  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #74ebd5, #ACB6E5);
-      padding: 30px;
-      max-width: 500px;
-      margin: auto;
-      border-radius: 15px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-    }
-    h1 {
-      text-align: center;
-      color: #fff;
-      margin-bottom: 20px;
-    }
-    .status {
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      font-weight: bold;
-      text-align: center;
-    }
-    .status.loading {
-      background-color: #ffe0b2;
-      color: #bf360c;
-    }
-    .status.error {
-      background-color: #ffcdd2;
-      color: #c62828;
-    }
-    button {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background: #4caf50;
-      color: #fff;
-      cursor: pointer;
-      margin-top: 10px;
-      transition: background 0.3s;
-    }
-    button:disabled {
-      background: #9e9e9e;
-      cursor: not-allowed;
-    }
-    button:hover:not(:disabled) {
-      background: #388e3c;
-    }
-    .result {
-      margin-top: 30px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    h2 {
-      margin-bottom: 15px;
-      color: #333;
-    }
-    .compass {
-      margin: 20px auto;
-      width: 220px;
-      height: 220px;
-      position: relative;
-    }
-    /* Стрелка указывает в сторону киблы */
-    .arrow {
-      width: 0; 
-      height: 0; 
-      border-left: 20px solid transparent;
-      border-right: 20px solid transparent;
-      border-bottom: 100px solid #00796b;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform-origin: bottom center;
-      transform: rotate(0deg);
-      transition: transform 0.5s ease;
-    }
-    /* В центре, чтобы было удобно */
-    .center-dot {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 10px;
-      height: 10px;
-      background: #00796b;
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Компас киблы</title>
+<script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+<style>
+body {
+  background: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+  margin: 0;
+}
+
+.compass-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #fff, #ddd);
+  border: 8px solid #006400; /* темно-зеленый градиент */
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.needle {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  width: 4px;
+  height: 150px;
+  background-color: #006400;
+  transform-origin: bottom center;
+  transform: rotate(0deg);
+  transition: transform 0.5s ease;
+  border-radius: 2px;
+}
+
+.center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background-color: #006400;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.north-label {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: bold;
+  font-size: 18px;
+  color: #006400;
+}
+
+.south-label {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-weight: bold;
+  font-size: 18px;
+  color: #006400;
+}
+
+.east-label {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  font-weight: bold;
+  font-size: 18px;
+  color: #006400;
+}
+
+.west-label {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  font-weight: bold;
+  font-size: 18px;
+  color: #006400;
+}
+
+button {
+  margin-top: 20px;
+  padding: 12px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #006400;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+button:hover {
+  background-color: #004d00;
+}
+</style>
 </head>
 <body>
-  <div id="app">
-    <h1>Показатель киблы</h1>
-    
-    <!-- Статус получения местоположения -->
-    <div 
-      class="status" 
-      :class="{'loading': loading, 'error': error}"
-      v-if="loading || error"
-    >
-      {{ loading ? 'Получение вашего местоположения...' : error }}
-    </div>
-    
-    <!-- Кнопка обновления -->
-    <button @click="getLocation" :disabled="loading">
-      {{ loading ? 'Обновление...' : 'Обновить местоположение' }}
-    </button>
-    
-    <!-- Результат -->
-    <div class="result" v-if="qiblaDirection !== null">
-      <h2>Направление киблы: {{ qiblaDirection.toFixed(1) }}°</h2>
-      <div class="compass">
-        <div class="center-dot"></div>
-        <div 
-          class="arrow" 
-          :style="{transform: 'rotate(' + qiblaDirection + 'deg)'}"
-        ></div>
-      </div>
-      <p>Стрелка указывает в сторону Мекки.</p>
-    </div>
+<div id="app" style="text-align: center;">
+  <div class="compass-container">
+    <div class="north-label">N</div>
+    <div class="south-label">S</div>
+    <div class="east-label">E</div>
+    <div class="west-label">W</div>
+    <div class="needle" :style="{transform: 'rotate(' + qiblaDirection + 'deg)'}"></div>
+    <div class="center-dot"></div>
   </div>
+  <div>
+    <button @click="getLocation">Обновить местоположение</button>
+  </div>
+  <div v-if="loading" style="margin-top:10px;">Получение местоположения...</div>
+  <div v-if="error" style="margin-top:10px; color:red;">{{ error }}</div>
+  <div v-if="qiblaDirection !== null" style="margin-top:20px;">
+    Направление киблы: {{ qiblaDirection.toFixed(1) }}°
+  </div>
+</div>
 
-  <script>
-    new Vue({
-      el: '#app',
-      data: {
-        latitude: null,
-        longitude: null,
-        qiblaDirection: null,
-        loading: false,
-        error: null,
-        // Координаты Мекки
-        meccaLat: 21.4225,
-        meccaLon: 39.8262
-      },
-      methods: {
-        getLocation() {
-          this.loading = true;
-          this.error = null;
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              position => {
-                this.latitude = position.coords.latitude;
-                this.longitude = position.coords.longitude;
-                this.calculateQibla();
-                this.loading = false;
-              },
-              err => {
-                this.error = 'Не удалось получить местоположение: ' + err.message;
-                this.loading = false;
-              }
-            );
-          } else {
-            this.error = 'Ваш браузер не поддерживает геолокацию.';
+<script>
+new Vue({
+  el: '#app',
+  data: {
+    latitude: null,
+    longitude: null,
+    qiblaDirection: null,
+    loading: false,
+    error: null,
+    meccaLat: 21.4225,
+    meccaLon: 39.8262
+  },
+  methods: {
+    getLocation() {
+      this.loading = true;
+      this.error = null;
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            this.latitude = position.coords.latitude;
+            this.longitude = position.coords.longitude;
+            this.calculateQibla();
+            this.loading = false;
+          },
+          err => {
+            this.error = 'Не удалось получить местоположение: ' + err.message;
             this.loading = false;
           }
-        },
-        calculateQibla() {
-          if (this.latitude !== null && this.longitude !== null) {
-            this.qiblaDirection = this.getQiblaDirection(
-              this.latitude,
-              this.longitude,
-              this.meccaLat,
-              this.meccaLon
-            );
-          }
-        },
-        getQiblaDirection(lat1, lon1, lat2, lon2) {
-          const φ1 = lat1 * Math.PI / 180;
-          const φ2 = lat2 * Math.PI / 180;
-          const Δλ = (lon2 - lon1) * Math.PI / 180;
-          
-          const y = Math.sin(Δλ) * Math.cos(φ2);
-          const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-          
-          let θ = Math.atan2(y, x);
-          θ = θ * 180 / Math.PI; // в градусы
-          return (θ + 360) % 360;
-        }
-      },
-      mounted() {
-        this.getLocation();
+        );
+      } else {
+        this.error = 'Ваш браузер не поддерживает геолокацию.';
+        this.loading = false;
       }
-    });
-  </script>
+    },
+    calculateQibla() {
+      if (this.latitude !== null && this.longitude !== null) {
+        const φ1 = this.latitude * Math.PI / 180;
+        const φ2 = this.meccaLat * Math.PI / 180;
+        const Δλ = (this.meccaLon - this.longitude) * Math.PI / 180;
+        const y = Math.sin(Δλ) * Math.cos(φ2);
+        const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+        let θ = Math.atan2(y, x);
+        θ = θ * 180 / Math.PI; // в градусы
+        this.qiblaDirection = (θ + 360) % 360;
+      }
+    }
+  },
+  mounted() {
+    this.getLocation();
+  }
+});
+</script>
 </body>
 </html>
