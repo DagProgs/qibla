@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Компас Каабы с направлением</title>
+<title>Красивый компас Каабы с направлением</title>
 <style>
   body {
     display: flex;
@@ -26,67 +26,71 @@
     border-radius: 50%;
     background: #fff;
   }
-  .labels {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-  }
+  /* Обозначения направлений */
   .label {
     position: absolute;
+    font-weight: bold;
     font-size: 14px;
-    transform: translate(-50%, -50%);
   }
-  /* Расположение обозначений направлений */
   .label-n { top: 10px; left: 50%; transform: translateX(-50%); }
-  .label-ne { top: 30px; right: 10px; }
+  .label-ne { top: 20px; right: 20px; }
   .label-e { top: 50%; right: 10px; transform: translateY(-50%); }
-  .label-se { bottom: 30px; right: 10px; }
+  .label-se { bottom: 20px; right: 20px; }
   .label-s { bottom: 10px; left: 50%; transform: translateX(-50%); }
-  .label-sw { bottom: 30px; left: 10px; }
+  .label-sw { bottom: 20px; left: 20px; }
   .label-w { top: 50%; left: 10px; transform: translateY(-50%); }
-  .label-nw { top: 30px; left: 10px; }
+  .label-nw { top: 20px; left: 20px; }
 
-  /* Обозначения промежуточных направлений */
-  .label-nne { top: 15px; right: 50%; transform: translateX(50%) translateY(-50%); }
-  .label-ene { top: 50%; right: 15px; transform: translateY(-50%); }
-  /* Можно добавить дополнительные, если нужно */
-
-  /* Центральная точка */
-  .center {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 10px;
-    height: 10px;
-    background: black;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 2;
-  }
+  /* Стрелка в стиле компаса */
   .arrow {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 0; 
     height: 0; 
-    border-left: 20px solid transparent;
-    border-right: 20px solid transparent;
-    border-top: 80px solid red; /* Стрелка указывает вниз */
-    transform-origin: top center; /* Вращение вокруг верхней точки */
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 120px solid #007bff; /* Цвет стрелки, синяя */
+    border-radius: 50%;
+    transform-origin: bottom center; /* Вращение вокруг основания стрелки */
     transform: translate(-50%, -100%) rotate(var(--deg));
-    z-index: 1;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    /* добавляем немного градиента или тени для красоты */
   }
+
+  /* Конец стрелки - острие */
+  .arrow::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; 
+    height: 0; 
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 20px solid #007bff; /* острие стрелки */
+  }
+
+  /* Центр */
+  .center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    background: black;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+  }
+
+  /* Кнопка и текст */
   button {
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
+    margin-top: 20px;
   }
   p {
     margin-top: 15px;
@@ -95,9 +99,9 @@
 </head>
 <body>
 <div id="app">
-  <h2>Компас Каабы</h2>
+  <h2>Компас Каабы с красивой стрелкой</h2>
   <div class="compass">
-    <!-- Обозначения направлений -->
+    <!-- Обозначения -->
     <div class="label label-n">С</div>
     <div class="label label-ne" style="top: 20px; right: 20px;">СВ</div>
     <div class="label label-e" style="top: 50%; right: 10px; transform: translateY(-50%);">В</div>
