@@ -1,11 +1,109 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Направление на Каабу</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+  #compass { width: 200px; height: 200px; margin: 20px auto; position: relative; }
+  #arrow {
+    width: 0; 
+    height: 0; 
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 100px solid red;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -100%) rotate(0deg);
+    transform-origin: bottom center;
+  }
+  #status { margin-top: 20px; }
+</style>
 </head>
 <body>
-  
+
+<h2>Направление на Каабу</h2>
+<div id="compass">
+  <div id="arrow"></div>
+</div>
+<div id="status">Получение данных...</div>
+
+<script>
+  // Координаты Каабы (Мекка)
+  const kabbaLat = 21.4225;
+  const kabbaLon = 39.8262;
+
+  let userLat = null;
+  let userLon = null;
+
+  // Получение геолокации
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        userLat = position.coords.latitude;
+        userLon = position.coords.longitude;
+        document.getElementById('status').innerText = 'Координаты получены. Ожидание ориентации...';
+        initOrientation();
+      },
+      error => {
+        document.getElementById('status').innerText = 'Ошибка получения геолокации: ' + error.message;
+      }
+    );
+  } else {
+    document.getElementById('status').innerText = 'Геолокация не поддерживается в этом браузере.';
+  }
+
+  // Инициализация события ориентации
+function initOrientation() {
+  if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', handleOrientation, true);
+  } else {
+    document.getElementById('status').innerText = 'Ориентация устройства не поддерживается.';
+  }
+}
+
+let deviceAlpha = null; // направление устройства (магнитный север)
+let deviceBeta = null;
+let deviceGamma = null;
+
+// Обработка ориентации устройства
+function handleOrientation(event) {
+  // event.alpha — направление относительно магнитного севера (0-360)
+  // event.beta и event.gamma — наклон устройства
+  deviceAlpha = event.alpha;
+
+  if (userLat !== null && userLon !== null && deviceAlpha !== null) {
+    updateArrow();
+  }
+}
+
+// Вычисление азимута к Каабе
+function getBearing(lat1, lon1, lat2, lon2) {
+  const φ1 = lat1 * Math.PI/180;
+  const φ2 = lat2 * Math.PI/180;
+  const Δλ = (lon2 - lon1) * Math.PI/180;
+
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+  let θ = Math.atan2(y, x);
+  θ = θ * 180/Math.PI; // в градусах
+  return (θ + 360) % 360; // в диапазоне 0-360
+}
+
+// Обновление стрелки
+function updateArrow() {
+  const bearing = getBearing(userLat, userLon, kabbaLat, kabbaLon);
+  // deviceAlpha — направление устройства относительно магнитного севера
+  // Нужно скорректировать на магнитное склонение, если есть (обычно не обязательно)
+  const direction = bearing - deviceAlpha;
+
+  // Обновляем угол стрелки
+  const arrow = document.getElementById('arrow');
+  arrow.style.transform = `translate(-50%, -100%) rotate(${direction}deg)`;
+}
+
+</script>
 </body>
 </html>
