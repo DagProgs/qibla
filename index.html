@@ -35,8 +35,8 @@
     height: 0; 
     border-left: 20px solid transparent;
     border-right: 20px solid transparent;
-    border-bottom: 80px solid red;
-    transform-origin: bottom center;
+    border-top: 80px solid red; /* Стрелка указывает вниз */
+    transform-origin: top center; /* Вращение вокруг верхней точки */
     transform: translate(-50%, -100%) rotate(var(--deg));
   }
   .center {
@@ -118,7 +118,6 @@ new Vue({
         // Можно использовать data из ориентации устройства, если нужно
         // Например, для более точного компаса
         // this.direction = (this.calculateHeadingFromDevice(event.alpha)) % 360;
-        // Для этого примера оставим так
       }
     }
   },
